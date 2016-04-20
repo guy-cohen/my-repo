@@ -31,8 +31,8 @@ parse_options() {
 parse_options $@
 
 if [ -z "$ARTIFACTORY_HOME" ]; then
-    echo "Please specify your ARTIFACTORY_HOME using -p"
-    echo "Usage: bash upgrade_ver.sh -p ARTIFACTORY_HOME"
+    echo "Please specify your old ARTIFACTORY_HOME using -p"
+    echo "Usage: bash upgrade_art.sh -p ARTIFACTORY_HOME"
     exit 1
 fi
 
