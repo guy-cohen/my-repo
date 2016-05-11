@@ -1,18 +1,30 @@
 #!/bin/bash
 
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
-   echo "USAGE: sudo bash upgrade_ver.sh -p $ARTIFACTORY_HOME"
+   echo "Please run this script as root" 
+   echo "USAGE: sudo bash upgrade_art.sh -p OLD_ARTIFACTORY_HOME"
    exit 1
 fi
 
-echo "Is artifactory running as a service (Yes/No)?"
-select yn in "Yes" "No"; do
+echo "IMPORTANT NOTES:
+1. This upgrade script is only for SA installation
+2. We highly recommend performing a full system export before the upgrade
+
+Would you like to proceed?"
+
+ select yn in "Yes" "No"; do
     case $yn in
-        Yes ) SERVICE_MODE=true; echo "y"; break;;
-        No ) SERVICE_MODE=false; echo "n"; break;;
+        Yes ) NOTICE=true; echo "y"; break;;
+        No ) NOTICE=false; echo "n"; break;;
     esac
 done
+
+if [ "$NOTICE" = true ] ; then
+  echo "Deploying new version"
+else
+  echo "Stopping upgrade process"
+  exit 1
+fi
 
 parse_options() {
     while getopts "w:s:S:v:c:ChRdVunfrEGi:p:P" opt; do
@@ -31,8 +43,8 @@ parse_options() {
 parse_options $@
 
 if [ -z "$ARTIFACTORY_HOME" ]; then
-    echo "Please specify your old ARTIFACTORY_HOME using -p"
-    echo "Usage: bash upgrade_art.sh -p ARTIFACTORY_HOME"
+    echo "Please specify your OLD_ARTIFACTORY_HOME using -p"
+    echo "Usage: bash upgrade_ver.sh -p OLD_ARTIFACTORY_HOME"
     exit 1
 fi
 
@@ -43,21 +55,8 @@ BIN_DIR="$ARTIFACTORY_HOME/bin"
 NEW_VER_DIR="$(pwd)/"
 
 if [[ (! -f $NEW_VER_DIR/README.txt) || (! -d $NEW_VER_DIR/webapps) || (! -d $NEW_VER_DIR/bin) || (! -d $NEW_VER_DIR/etc) ]]; then
-  echo "ERROR: Please run the upgrade script from the new package directory"
+  echo "ERROR: Please run the upgrade script from the new package folder"
   exit 1
-fi
-
-if [ "$SERVICE_MODE" = true ] ; then
-  echo "Stopping the artifactory service"
-  service artifactory stop
-else
-  RESULT=$(ps -a | grep artifactory | wc -l)
-  if [ $RESULT -eq 0 ]; then
-      echo "Deploying new version"
-  else 
-      echo "Please stop the artifactory service before deploying the new version"
-      exit 1
-  fi
 fi
 
 echo "Using $ARTIFACTORY_HOME as ARTIFACTORY_HOME"
@@ -88,13 +87,6 @@ echo "Copied $NEW_VER_DIR/webapps/artifactory.war to $ARTIFACTORY_HOME/webapps"
 cp "/tmp/server.xml" "$SERVERXML"
 echo "Copied server.xml back to $ARTIFACTORY_HOME"
 
-echo "Running new artifactory version"
-sudo /bin/bash "$ARTIFACTORY_HOME/bin/artifactory.sh"
-
-if [ "$SERVICE_MODE" = true ] ; then
-sudo /bin/bash "$ARTIFACTORY_HOME/bin/installService.sh"
-  echo "New artifactory is up and running"
-else
-sudo /bin/bash "$ARTIFACTORY_HOME/bin/artifactory.sh"
+sh "$ARTIFACTORY_HOME/bin/artifactory.sh"
   echo "New artifactory is up and running"
 fi
