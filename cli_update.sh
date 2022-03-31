@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Update script for CLI, applying latest version
-curl -fL https://getcli.jfrog.io | sh
+curl -fL https://getcli.jfrog.io/v2-jf | sh
 
 sleep 5
 mv ~/Work/cli/jfrog /usr/local/bin
